@@ -7,6 +7,13 @@ public class RockThrow : MonoBehaviour
     public float throwForwardForce = 3f;
     public float throwUpForce = 4f;
 
+    PlayerInventory inventory;
+
+    void Start()
+    {
+        inventory = GetComponent<PlayerInventory>();
+    }
+
     void Update()
     {
         if (Keyboard.current.rKey.wasPressedThisFrame)
@@ -17,15 +24,13 @@ public class RockThrow : MonoBehaviour
     {
         if (rockPrefab == null) return;
 
-        // Spawn just in front and slightly above the player
+        if (!inventory.UseRock()) return; // stops throw if no rocks
+
         Vector3 spawnPos = transform.position + transform.forward * 0.5f + Vector3.up * 1f;
         GameObject rock = Instantiate(rockPrefab, spawnPos, Quaternion.identity);
 
         Rigidbody rb = rock.GetComponent<Rigidbody>();
         if (rb != null)
-        {
-            Vector3 throwDir = transform.forward * throwForwardForce + Vector3.up * throwUpForce;
-            rb.linearVelocity = throwDir;
-        }
+            rb.linearVelocity = transform.forward * throwForwardForce + Vector3.up * throwUpForce;
     }
 }
