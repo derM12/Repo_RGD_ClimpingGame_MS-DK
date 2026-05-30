@@ -1,268 +1,326 @@
 ﻿using UnityEngine;
+using System.Collections;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
 
 namespace StarterAssets
 {
-	[RequireComponent(typeof(CharacterController))]
+    [RequireComponent(typeof(CharacterController))]
 #if ENABLE_INPUT_SYSTEM
-	[RequireComponent(typeof(PlayerInput))]
+    [RequireComponent(typeof(PlayerInput))]
 #endif
-	public class FirstPersonController : MonoBehaviour
-	{
-		[Header("Player")]
-		[Tooltip("Move speed of the character in m/s")]
-		public float MoveSpeed = 4.0f;
-		[Tooltip("Sprint speed of the character in m/s")]
-		public float SprintSpeed = 6.0f;
-		[Tooltip("Rotation speed of the character")]
-		public float RotationSpeed = 1.0f;
-		[Tooltip("Acceleration and deceleration")]
-		public float SpeedChangeRate = 10.0f;
+    public class FirstPersonController : MonoBehaviour
+    {
+        [Header("Player")]
+        public float MoveSpeed = 4.0f;
+        public float SprintSpeed = 6.0f;
+        public float RotationSpeed = 1.0f;
+        public float SpeedChangeRate = 10.0f;
 
-		[Space(10)]
-		[Tooltip("The height the player can jump")]
-		public float JumpHeight = 1.2f;
-		[Tooltip("The character uses its own gravity value. The engine default is -9.81f")]
-		public float Gravity = -15.0f;
+        [Space(10)]
+        public float JumpHeight = 1.2f;
+        public float Gravity = -15.0f;
 
-		[Space(10)]
-		[Tooltip("Time required to pass before being able to jump again. Set to 0f to instantly jump again")]
-		public float JumpTimeout = 0.1f;
-		[Tooltip("Time required to pass before entering the fall state. Useful for walking down stairs")]
-		public float FallTimeout = 0.15f;
+        [Space(10)]
+        public float JumpTimeout = 0.1f;
+        public float FallTimeout = 0.15f;
 
-		[Header("Player Grounded")]
-		[Tooltip("If the character is grounded or not. Not part of the CharacterController built in grounded check")]
-		public bool Grounded = true;
-		[Tooltip("Useful for rough ground")]
-		public float GroundedOffset = -0.14f;
-		[Tooltip("The radius of the grounded check. Should match the radius of the CharacterController")]
-		public float GroundedRadius = 0.5f;
-		[Tooltip("What layers the character uses as ground")]
-		public LayerMask GroundLayers;
+        [Header("Player Grounded")]
+        public bool Grounded = true;
+        public float GroundedOffset = -0.14f;
+        public float GroundedRadius = 0.5f;
+        public LayerMask GroundLayers;
 
-		[Header("Cinemachine")]
-		[Tooltip("The follow target set in the Cinemachine Virtual Camera that the camera will follow")]
-		public GameObject CinemachineCameraTarget;
-		[Tooltip("How far in degrees can you move the camera up")]
-		public float TopClamp = 90.0f;
-		[Tooltip("How far in degrees can you move the camera down")]
-		public float BottomClamp = -90.0f;
+        [Header("Cinemachine")]
+        public GameObject CinemachineCameraTarget;
+        public float TopClamp = 90.0f;
+        public float BottomClamp = -90.0f;
 
-		// cinemachine
-		private float _cinemachineTargetPitch;
+        [Header("Climbing")]
+        public float ClimbSpeed = 2f;
 
-		// player
-		private float _speed;
-		private float _rotationVelocity;
-		private float _verticalVelocity;
-		private float _terminalVelocity = 53.0f;
+        // cinemachine
+        private float _cinemachineTargetPitch;
 
-		// timeout deltatime
-		private float _jumpTimeoutDelta;
-		private float _fallTimeoutDelta;
+        // player
+        private float _speed;
+        private float _rotationVelocity;
+        private float _verticalVelocity;
+        private float _terminalVelocity = 53.0f;
 
-	
+        // timeout deltatime
+        private float _jumpTimeoutDelta;
+        private float _fallTimeoutDelta;
+
+        // climbing
+        public bool IsClimbing { get; private set; }
+        private Transform _ropeTarget;
+        private float _ropeMinY;
+        private float _ropeMaxY;
+        private Vector3 _ropeExitDirection;
+
 #if ENABLE_INPUT_SYSTEM
-		private PlayerInput _playerInput;
+        private PlayerInput _playerInput;
 #endif
-		private CharacterController _controller;
-		private StarterAssetsInputs _input;
-		private GameObject _mainCamera;
+        private CharacterController _controller;
+        private StarterAssetsInputs _input;
+        private GameObject _mainCamera;
 
-		private const float _threshold = 0.01f;
+        private const float _threshold = 0.01f;
 
-		private bool IsCurrentDeviceMouse
-		{
-			get
-			{
-				#if ENABLE_INPUT_SYSTEM
-				return _playerInput.currentControlScheme == "KeyboardMouse";
-				#else
-				return false;
-				#endif
-			}
-		}
-
-		private void Awake()
-		{
-			// get a reference to our main camera
-			if (_mainCamera == null)
-			{
-				_mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
-			}
-		}
-
-		private void Start()
-		{
-			_controller = GetComponent<CharacterController>();
-			_input = GetComponent<StarterAssetsInputs>();
+        private bool IsCurrentDeviceMouse
+        {
+            get
+            {
 #if ENABLE_INPUT_SYSTEM
-			_playerInput = GetComponent<PlayerInput>();
+                return _playerInput.currentControlScheme == "KeyboardMouse";
 #else
-			Debug.LogError( "Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
+                return false;
 #endif
+            }
+        }
 
-			// reset our timeouts on start
-			_jumpTimeoutDelta = JumpTimeout;
-			_fallTimeoutDelta = FallTimeout;
-		}
+        private void Awake()
+        {
+            if (_mainCamera == null)
+                _mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
+        }
 
-		private void Update()
-		{
-			JumpAndGravity();
-			GroundedCheck();
-			Move();
-		}
+        private void Start()
+        {
+            _controller = GetComponent<CharacterController>();
+            _input = GetComponent<StarterAssetsInputs>();
+#if ENABLE_INPUT_SYSTEM
+            _playerInput = GetComponent<PlayerInput>();
+#else
+            Debug.LogError("Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
+#endif
+            _jumpTimeoutDelta = JumpTimeout;
+            _fallTimeoutDelta = FallTimeout;
+        }
 
-		private void LateUpdate()
-		{
-			CameraRotation();
-		}
+        private void Update()
+        {
+            if (IsClimbing)
+                Climb();
+            else
+            {
+                JumpAndGravity();
+                GroundedCheck();
+                Move();
+            }
+        }
 
-		private void GroundedCheck()
-		{
-			// set sphere position, with offset
-			Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - GroundedOffset, transform.position.z);
-			Grounded = Physics.CheckSphere(spherePosition, GroundedRadius, GroundLayers, QueryTriggerInteraction.Ignore);
-		}
+        private void LateUpdate()
+        {
+            CameraRotation();
+        }
 
-		private void CameraRotation()
-		{
-			// if there is an input
-			if (_input.look.sqrMagnitude >= _threshold)
-			{
-				//Don't multiply mouse input by Time.deltaTime
-				float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.deltaTime;
-				
-				_cinemachineTargetPitch += _input.look.y * RotationSpeed * deltaTimeMultiplier;
-				_rotationVelocity = _input.look.x * RotationSpeed * deltaTimeMultiplier;
+        private void GroundedCheck()
+        {
+            Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - GroundedOffset, transform.position.z);
+            Grounded = Physics.CheckSphere(spherePosition, GroundedRadius, GroundLayers, QueryTriggerInteraction.Ignore);
+        }
 
-				// clamp our pitch rotation
-				_cinemachineTargetPitch = ClampAngle(_cinemachineTargetPitch, BottomClamp, TopClamp);
+        private void CameraRotation()
+        {
+            if (_input.look.sqrMagnitude >= _threshold)
+            {
+                float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.deltaTime;
 
-				// Update Cinemachine camera target pitch
-				CinemachineCameraTarget.transform.localRotation = Quaternion.Euler(_cinemachineTargetPitch, 0.0f, 0.0f);
+                _cinemachineTargetPitch += _input.look.y * RotationSpeed * deltaTimeMultiplier;
+                _rotationVelocity = _input.look.x * RotationSpeed * deltaTimeMultiplier;
 
-				// rotate the player left and right
-				transform.Rotate(Vector3.up * _rotationVelocity);
-			}
-		}
+                _cinemachineTargetPitch = ClampAngle(_cinemachineTargetPitch, BottomClamp, TopClamp);
+                CinemachineCameraTarget.transform.localRotation = Quaternion.Euler(_cinemachineTargetPitch, 0.0f, 0.0f);
 
-		private void Move()
-		{
-			// set target speed based on move speed, sprint speed and if sprint is pressed
-			float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+                // only rotate player left/right when not climbing
+                if (!IsClimbing)
+                    transform.Rotate(Vector3.up * _rotationVelocity);
+            }
+        }
 
-			// a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
+        private void Move()
+        {
+            float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+            if (_input.move == Vector2.zero) targetSpeed = 0.0f;
 
-			// note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-			// if there is no input, set the target speed to 0
-			if (_input.move == Vector2.zero) targetSpeed = 0.0f;
+            float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
+            float speedOffset = 0.1f;
+            float inputMagnitude = _input.analogMovement ? _input.move.magnitude : 1f;
 
-			// a reference to the players current horizontal velocity
-			float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
+            if (currentHorizontalSpeed < targetSpeed - speedOffset || currentHorizontalSpeed > targetSpeed + speedOffset)
+            {
+                _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude, Time.deltaTime * SpeedChangeRate);
+                _speed = Mathf.Round(_speed * 1000f) / 1000f;
+            }
+            else
+            {
+                _speed = targetSpeed;
+            }
 
-			float speedOffset = 0.1f;
-			float inputMagnitude = _input.analogMovement ? _input.move.magnitude : 1f;
+            Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
+            if (_input.move != Vector2.zero)
+                inputDirection = transform.right * _input.move.x + transform.forward * _input.move.y;
 
-			// accelerate or decelerate to target speed
-			if (currentHorizontalSpeed < targetSpeed - speedOffset || currentHorizontalSpeed > targetSpeed + speedOffset)
-			{
-				// creates curved result rather than a linear one giving a more organic speed change
-				// note T in Lerp is clamped, so we don't need to clamp our speed
-				_speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude, Time.deltaTime * SpeedChangeRate);
+            _controller.Move(inputDirection.normalized * (_speed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+        }
 
-				// round speed to 3 decimal places
-				_speed = Mathf.Round(_speed * 1000f) / 1000f;
-			}
-			else
-			{
-				_speed = targetSpeed;
-			}
+        private void Climb()
+        {
+            // W/S moves up and down the rope
+            float vertical = _input.move.y;
 
-			// normalise input direction
-			Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
+            // Snap X/Z to rope
+            Vector3 snapped = new Vector3(_ropeTarget.position.x, transform.position.y, _ropeTarget.position.z);
+            transform.position = Vector3.Lerp(transform.position, snapped, Time.deltaTime * 15f);
 
-			// note: Vector2's != operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-			// if there is a move input rotate player when the player is moving
-			if (_input.move != Vector2.zero)
-			{
-				// move
-				inputDirection = transform.right * _input.move.x + transform.forward * _input.move.y;
-			}
+            _controller.Move(Vector3.up * vertical * ClimbSpeed * Time.deltaTime);
 
-			// move the player
-			_controller.Move(inputDirection.normalized * (_speed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
-		}
+            // Clamp to rope bounds
+            float clampedY = Mathf.Clamp(transform.position.y, _ropeMinY, _ropeMaxY);
+            if (transform.position.y != clampedY)
+            {
+                Vector3 pos = transform.position;
+                pos.y = clampedY;
+                transform.position = pos;
+            }
 
-		private void JumpAndGravity()
-		{
-			if (Grounded)
-			{
-				// reset the fall timeout timer
-				_fallTimeoutDelta = FallTimeout;
+            _verticalVelocity = 0f;
+        }
 
-				// stop our velocity dropping infinitely when grounded
-				if (_verticalVelocity < 0.0f)
-				{
-					_verticalVelocity = -2f;
-				}
+        private void JumpAndGravity()
+        {
+            if (Grounded)
+            {
+                _fallTimeoutDelta = FallTimeout;
+                if (_verticalVelocity < 0.0f)
+                    _verticalVelocity = -2f;
 
-				// Jump
-				if (_input.jump && _jumpTimeoutDelta <= 0.0f)
-				{
-					// the square root of H * -2 * G = how much velocity needed to reach desired height
-					_verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
-				}
+                if (_input.jump && _jumpTimeoutDelta <= 0.0f)
+                    _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
 
-				// jump timeout
-				if (_jumpTimeoutDelta >= 0.0f)
-				{
-					_jumpTimeoutDelta -= Time.deltaTime;
-				}
-			}
-			else
-			{
-				// reset the jump timeout timer
-				_jumpTimeoutDelta = JumpTimeout;
+                if (_jumpTimeoutDelta >= 0.0f)
+                    _jumpTimeoutDelta -= Time.deltaTime;
+            }
+            else
+            {
+                _jumpTimeoutDelta = JumpTimeout;
+                if (_fallTimeoutDelta >= 0.0f)
+                    _fallTimeoutDelta -= Time.deltaTime;
+                _input.jump = false;
+            }
 
-				// fall timeout
-				if (_fallTimeoutDelta >= 0.0f)
-				{
-					_fallTimeoutDelta -= Time.deltaTime;
-				}
+            if (_verticalVelocity < _terminalVelocity)
+                _verticalVelocity += Gravity * Time.deltaTime;
+        }
 
-				// if we are not grounded, do not jump
-				_input.jump = false;
-			}
+        public void EnterClimb(Transform rope, Transform topPoint, Transform bottomPoint)
+        {
+            IsClimbing = true;
+            _ropeTarget = rope;
+            _verticalVelocity = 0f;
 
-			// apply gravity over time if under terminal (multiply by delta time twice to linearly speed up over time)
-			if (_verticalVelocity < _terminalVelocity)
-			{
-				_verticalVelocity += Gravity * Time.deltaTime;
-			}
-		}
+            _ropeMaxY = topPoint != null ? topPoint.position.y : rope.position.y;
+            _ropeMinY = bottomPoint != null ? bottomPoint.position.y : rope.position.y - 10f;
 
-		private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
-		{
-			if (lfAngle < -360f) lfAngle += 360f;
-			if (lfAngle > 360f) lfAngle -= 360f;
-			return Mathf.Clamp(lfAngle, lfMin, lfMax);
-		}
+            Vector3 directionFromRope = transform.position - rope.position;
+            directionFromRope.y = 0f;
+            directionFromRope.Normalize();
 
-		private void OnDrawGizmosSelected()
-		{
-			Color transparentGreen = new Color(0.0f, 1.0f, 0.0f, 0.35f);
-			Color transparentRed = new Color(1.0f, 0.0f, 0.0f, 0.35f);
+            _ropeExitDirection = directionFromRope;
 
-			if (Grounded) Gizmos.color = transparentGreen;
-			else Gizmos.color = transparentRed;
+            float grabDistance = 1f;
+            Vector3 opposite = rope.position + (-directionFromRope * grabDistance);
+            opposite.y = _ropeMaxY;
 
-			// when selected, draw a gizmo in the position of, and matching radius of, the grounded collider
-			Gizmos.DrawSphere(new Vector3(transform.position.x, transform.position.y - GroundedOffset, transform.position.z), GroundedRadius);
-		}
-	}
+            // Teleport position instantly, rotate smoothly
+            _controller.enabled = false;
+            transform.position = opposite;
+            Physics.SyncTransforms();
+            _controller.enabled = true;
+
+            StartCoroutine(SmoothRotate(Quaternion.LookRotation(directionFromRope), 0.5f));
+
+            Debug.Log("Entered climb. MinY: " + _ropeMinY + " MaxY: " + _ropeMaxY);
+        }
+
+        public void ExitClimb()
+        {
+            bool atTop = Mathf.Abs(transform.position.y - _ropeMaxY) < 0.1f;
+
+            IsClimbing = false;
+            _verticalVelocity = 0f;
+
+            if (atTop)
+            {
+                // Flip to other side
+                float grabDistance = 1f;
+                Vector3 exitPos = _ropeTarget.position + (_ropeExitDirection * grabDistance);
+                exitPos.y = transform.position.y;
+
+                StartCoroutine(TeleportExit(exitPos, Quaternion.LookRotation(_ropeExitDirection), true));
+                Debug.Log("Exited at top - flipping position");
+            }
+            else
+            {
+                // Stay in place, just rotate smoothly
+                StartCoroutine(SmoothRotate(Quaternion.LookRotation(_ropeExitDirection), 0.5f));
+                Debug.Log("Exited mid-rope - staying in place");
+            }
+
+            _ropeTarget = null;
+        }
+
+        private IEnumerator TeleportExit(Vector3 position, Quaternion targetRotation, bool smoothRot)
+        {
+            _controller.enabled = false;
+            transform.position = position;
+            Physics.SyncTransforms();
+            yield return null;
+            _controller.enabled = true;
+
+            if (smoothRot)
+                StartCoroutine(SmoothRotate(targetRotation, 0.5f));
+        }
+
+        private IEnumerator SmoothRotate(Quaternion targetRotation, float duration)
+        {
+            Quaternion startRotation = transform.rotation;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                transform.rotation = Quaternion.Slerp(startRotation, targetRotation, elapsed / duration);
+                yield return null;
+            }
+
+            transform.rotation = targetRotation;
+        }
+
+        public bool IsOnRope(Transform rope)
+        {
+            return _ropeTarget == rope;
+        }
+
+        private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
+        {
+            if (lfAngle < -360f) lfAngle += 360f;
+            if (lfAngle > 360f) lfAngle -= 360f;
+            return Mathf.Clamp(lfAngle, lfMin, lfMax);
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            Color transparentGreen = new Color(0.0f, 1.0f, 0.0f, 0.35f);
+            Color transparentRed = new Color(1.0f, 0.0f, 0.0f, 0.35f);
+
+            if (Grounded) Gizmos.color = transparentGreen;
+            else Gizmos.color = transparentRed;
+
+            Gizmos.DrawSphere(new Vector3(transform.position.x, transform.position.y - GroundedOffset, transform.position.z), GroundedRadius);
+        }
+    }
 }

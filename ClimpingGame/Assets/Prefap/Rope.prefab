@@ -301,7 +301,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d35f0545f2333a14286738abe5e7a564, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RopeClimb
-  interactRange: 0.8
+  interactRange: 2
   topPoint: {fileID: 4704699822480403561}
   bottomPoint: {fileID: 3229773630874962016}
 --- !u!1 &5593239058465897277

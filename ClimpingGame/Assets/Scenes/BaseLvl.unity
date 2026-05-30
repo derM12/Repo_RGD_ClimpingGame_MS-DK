@@ -25988,7 +25988,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8616685848737228372, guid: c5efc39a8aaf6e64ea40e9ad573e9b47, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1999699013}
   m_SourcePrefab: {fileID: 100100000, guid: c5efc39a8aaf6e64ea40e9ad573e9b47, type: 3}
 --- !u!1 &1250442840
 GameObject:
@@ -30309,6 +30312,26 @@ Transform:
   - {fileID: 335485986}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1999699005 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8616685848737228372, guid: c5efc39a8aaf6e64ea40e9ad573e9b47, type: 3}
+  m_PrefabInstance: {fileID: 1241452223}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1999699013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1999699005}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 656fcbb638db5384b948c3a2800dda96, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RockThrow
+  rockPrefab: {fileID: 6890947580749339510, guid: 922fdb5ac684ebb4a8a64ce052b3c635, type: 3}
+  throwForwardForce: 3
+  throwUpForce: 4
 --- !u!1 &2003945447
 GameObject:
   m_ObjectHideFlags: 0

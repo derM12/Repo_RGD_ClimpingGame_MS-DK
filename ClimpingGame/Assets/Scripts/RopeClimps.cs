@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using StarterAssets;
 
 public class RopeClimb : MonoBehaviour
 {
@@ -7,14 +8,14 @@ public class RopeClimb : MonoBehaviour
     public Transform topPoint;
     public Transform bottomPoint;
 
-    PlayerMovement player;
+    FirstPersonController player;
 
     void Start()
     {
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if (playerObj != null)
         {
-            player = playerObj.GetComponent<PlayerMovement>();
+            player = playerObj.GetComponent<FirstPersonController>();
             Debug.Log("RopeClimb: Player found - " + playerObj.name);
         }
         else
@@ -31,7 +32,6 @@ public class RopeClimb : MonoBehaviour
         {
             if (player.IsClimbing)
             {
-                // Only THIS rope can release the player if they grabbed THIS rope
                 if (player.IsOnRope(transform))
                 {
                     player.ExitClimb();
