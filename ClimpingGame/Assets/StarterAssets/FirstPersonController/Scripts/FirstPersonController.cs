@@ -59,6 +59,7 @@ namespace StarterAssets
         private float _ropeMinY;
         private float _ropeMaxY;
         private Vector3 _ropeExitDirection;
+        private bool _enteredFromBottom;
 
 #if ENABLE_INPUT_SYSTEM
         private PlayerInput _playerInput;
@@ -143,6 +144,8 @@ namespace StarterAssets
 
         private void Move()
         {
+            if (!_controller.enabled) return;
+
             float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
             if (_input.move == Vector2.zero) targetSpeed = 0.0f;
 
@@ -216,11 +219,13 @@ namespace StarterAssets
                 _verticalVelocity += Gravity * Time.deltaTime;
         }
 
-        public void EnterClimb(Transform rope, Transform topPoint, Transform bottomPoint)
+        public void EnterClimb(Transform rope, Transform topPoint, Transform bottomPoint, bool fromBottom = false)
         {
+            _enteredFromBottom = fromBottom;
             IsClimbing = true;
             _ropeTarget = rope;
             _verticalVelocity = 0f;
+
 
             _ropeMaxY = topPoint != null ? topPoint.position.y : rope.position.y;
             _ropeMinY = bottomPoint != null ? bottomPoint.position.y : rope.position.y - 10f;
@@ -231,46 +236,58 @@ namespace StarterAssets
 
             _ropeExitDirection = directionFromRope;
 
-            float grabDistance = 1f;
-            Vector3 opposite = rope.position + (-directionFromRope * grabDistance);
-            opposite.y = _ropeMaxY;
+            if (fromBottom)
+            {
+                // Stay in place, just smooth rotate to face the rope
+                StartCoroutine(SmoothRotate(Quaternion.LookRotation(-directionFromRope), 0.5f));
+                Debug.Log("Grabbed from bottom - no position flip");
+            }
+            else
+            {
+                // Flip to opposite side at top
+                float grabDistance = 1f;
+                Vector3 opposite = rope.position + (-directionFromRope * grabDistance);
+                opposite.y = _ropeMaxY;
 
-            // Teleport position instantly, rotate smoothly
-            _controller.enabled = false;
-            transform.position = opposite;
-            Physics.SyncTransforms();
-            _controller.enabled = true;
+                _controller.enabled = false;
+                transform.position = opposite;
+                Physics.SyncTransforms();
+                _controller.enabled = true;
 
-            StartCoroutine(SmoothRotate(Quaternion.LookRotation(directionFromRope), 0.5f));
-
-            Debug.Log("Entered climb. MinY: " + _ropeMinY + " MaxY: " + _ropeMaxY);
+                StartCoroutine(SmoothRotate(Quaternion.LookRotation(directionFromRope), 0.5f));
+                Debug.Log("Grabbed from top - flipped to other side");
+            }
         }
 
         public void ExitClimb()
         {
             bool atTop = Mathf.Abs(transform.position.y - _ropeMaxY) < 0.1f;
+            bool shouldFlip = atTop || _enteredFromBottom;
 
             IsClimbing = false;
             _verticalVelocity = 0f;
 
-            if (atTop)
+            if (shouldFlip)
             {
-                // Flip to other side
                 float grabDistance = 1f;
-                Vector3 exitPos = _ropeTarget.position + (_ropeExitDirection * grabDistance);
+
+                // Bottom entry: flip to opposite side. Top entry: flip back to original side.
+                Vector3 flipDir = _enteredFromBottom ? -_ropeExitDirection : _ropeExitDirection;
+
+                Vector3 exitPos = _ropeTarget.position + (flipDir * grabDistance);
                 exitPos.y = transform.position.y;
 
-                StartCoroutine(TeleportExit(exitPos, Quaternion.LookRotation(_ropeExitDirection), true));
-                Debug.Log("Exited at top - flipping position");
+                StartCoroutine(TeleportExit(exitPos, Quaternion.LookRotation(flipDir), true));
+                Debug.Log("Exited - flipping to: " + flipDir);
             }
             else
             {
-                // Stay in place, just rotate smoothly
                 StartCoroutine(SmoothRotate(Quaternion.LookRotation(_ropeExitDirection), 0.5f));
                 Debug.Log("Exited mid-rope - staying in place");
             }
 
             _ropeTarget = null;
+            _enteredFromBottom = false;
         }
 
         private IEnumerator TeleportExit(Vector3 position, Quaternion targetRotation, bool smoothRot)

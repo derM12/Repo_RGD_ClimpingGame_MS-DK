@@ -40,14 +40,24 @@ public class RopeClimb : MonoBehaviour
             }
             else
             {
-                Vector3 checkFrom = topPoint != null ? topPoint.position : transform.position;
-                float distance = Vector3.Distance(checkFrom, player.transform.position);
-                Debug.Log("Distance to top of rope: " + distance + " | In range: " + (distance <= interactRange));
+                // Check top point
+                float distanceTop = topPoint != null ? Vector3.Distance(topPoint.position, player.transform.position) : float.MaxValue;
+                // Check bottom point
+                float distanceBottom = bottomPoint != null ? Vector3.Distance(bottomPoint.position, player.transform.position) : float.MaxValue;
 
-                if (distance <= interactRange)
+                if (distanceTop <= interactRange)
                 {
-                    player.EnterClimb(transform, topPoint, bottomPoint);
-                    Debug.Log("Entered climb");
+                    Debug.Log("Grabbing from top");
+                    player.EnterClimb(transform, topPoint, bottomPoint, fromBottom: false);
+                }
+                else if (distanceBottom <= interactRange)
+                {
+                    Debug.Log("Grabbing from bottom");
+                    player.EnterClimb(transform, topPoint, bottomPoint, fromBottom: true);
+                }
+                else
+                {
+                    Debug.Log("Distance top: " + distanceTop + " | Distance bottom: " + distanceBottom);
                 }
             }
         }
