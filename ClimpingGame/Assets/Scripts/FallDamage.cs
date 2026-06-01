@@ -12,6 +12,7 @@ public class FallDamage : MonoBehaviour
     public float recoverySpeed = 0.05f;    // trauma lost per second
 
     float trauma = 0f;                     // 0 = fine, 1 = dead
+    float previousTrauma = 0f;             // trauma carried over from previous falls
     float recoveryTimer = 0f;
     bool isRecovering = false;
 
@@ -56,19 +57,24 @@ public class FallDamage : MonoBehaviour
         {
             wasFalling = true;
 
-            // Live trauma while falling
             float currentFallDistance = highestY - transform.position.y;
             if (currentFallDistance > safeFallHeight)
             {
                 float t = Mathf.InverseLerp(safeFallHeight, deadlyFallHeight, currentFallDistance);
-                trauma = Mathf.Clamp01(t);
+                trauma = Mathf.Clamp01(previousTrauma + t); // add to previous trauma
                 isRecovering = false;
                 recoveryTimer = 0f;
 
-                // Live percentage logs
                 if (trauma >= 1f)
-                    Debug.Log("Falling | Trauma: 100% - FATAL");
-                else if (trauma > 0.66f)
+                {
+                    Debug.Log("DEAD mid-air - respawning");
+                    wasFalling = false;
+                    highestY = transform.position.y;
+                    Respawn();
+                    return;
+                }
+
+                if (trauma > 0.66f)
                     Debug.Log("Falling | Trauma: " + (trauma * 100f).ToString("F0") + "% - CRITICAL");
                 else if (trauma > 0.33f)
                     Debug.Log("Falling | Trauma: " + (trauma * 100f).ToString("F0") + "% - HEAVY");
@@ -89,10 +95,10 @@ public class FallDamage : MonoBehaviour
             }
             else
             {
-                trauma = 0f;
                 Debug.Log("Safe landing.");
             }
 
+            previousTrauma = trauma; // save trauma after landing
             highestY = transform.position.y;
             wasFalling = false;
         }
@@ -100,7 +106,7 @@ public class FallDamage : MonoBehaviour
 
     void ApplyTrauma(float amount, float fallDistance)
     {
-        trauma = Mathf.Clamp01(amount); // use directly, not additive, since live fall already set it
+        trauma = Mathf.Clamp01(previousTrauma + amount); // add to previous trauma
         recoveryTimer = 0f;
         isRecovering = false;
 
@@ -109,7 +115,7 @@ public class FallDamage : MonoBehaviour
         if (trauma >= 1f)
         {
             Debug.Log("DEAD");
-            // GameManager.Instance.RestartGame();
+            Respawn();
         }
         else if (trauma > 0.66f)
             Debug.Log("Vignette: CRITICAL");
@@ -135,10 +141,37 @@ public class FallDamage : MonoBehaviour
         else
         {
             trauma = Mathf.Max(0f, trauma - recoverySpeed * Time.deltaTime);
+            previousTrauma = trauma; // keep previousTrauma in sync while recovering
 
             // Log recovery milestones
             if (trauma <= 0f)
+            {
+                previousTrauma = 0f;
                 Debug.Log("Vignette: fully recovered");
+            }
         }
+    }
+
+    void Respawn()
+    {
+        if (SpawnPoint.Instance == null)
+        {
+            Debug.LogError("No SpawnPoint found in scene!");
+            return;
+        }
+
+        trauma = 0f;
+        previousTrauma = 0f;
+        isRecovering = false;
+        recoveryTimer = 0f;
+        wasFalling = false;
+
+        cc.enabled = false;
+        transform.position = SpawnPoint.Instance.transform.position;
+        transform.rotation = SpawnPoint.Instance.transform.rotation;
+        Physics.SyncTransforms();
+        cc.enabled = true;
+
+        Debug.Log("Respawned at spawn point");
     }
 }
