@@ -24,6 +24,7 @@ public class RopeActivation : MonoBehaviour
         else
             Debug.LogError("HookActivator: No sibling named Rope found!");
     }
+
     void Update()
     {
         if (activated || player == null) return;

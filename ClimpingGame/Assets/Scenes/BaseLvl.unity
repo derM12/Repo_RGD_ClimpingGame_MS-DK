@@ -215561,8 +215561,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RockThrow
   rockPrefab: {fileID: 6890947580749339510, guid: 922fdb5ac684ebb4a8a64ce052b3c635, type: 3}
-  throwForwardForce: 1
-  throwUpForce: 1.5
+  minForwardForce: 0.25
+  maxForwardForce: 5
+  chargeTime: 3
+  throwUpForce: 1
 --- !u!114 &1999699014
 MonoBehaviour:
   m_ObjectHideFlags: 0

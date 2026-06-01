@@ -8,6 +8,12 @@ public class ShinyRock : MonoBehaviour
     public Color endColor = Color.red;
     public float colorChangeDistance = 10f; // adjust this in inspector
 
+    [Header("Lifetime")]
+    public float fadeStartTime = 30f;
+    public float fadeEndTime = 60f;
+
+    float timeAlive = 0f;
+
     float startY;
     Renderer rockRenderer;
     MaterialPropertyBlock propBlock;
@@ -35,5 +41,29 @@ public class ShinyRock : MonoBehaviour
         propBlock.SetColor("_BaseColor", currentColor);
         propBlock.SetColor("_EmissionColor", currentColor * 0.5f);
         rockRenderer.SetPropertyBlock(propBlock);
+
+        // Lifetime
+        timeAlive += Time.deltaTime;
+
+        if (timeAlive >= fadeEndTime)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        if (timeAlive >= fadeStartTime)
+        {
+            float fadeT = Mathf.InverseLerp(fadeStartTime, fadeEndTime, timeAlive);
+            float alpha = Mathf.Lerp(1f, 0f, fadeT);
+
+            Color fadedColor = currentColor;
+            fadedColor.a = alpha;
+
+            rockRenderer.GetPropertyBlock(propBlock);
+            propBlock.SetColor("_BaseColor", fadedColor);
+            propBlock.SetColor("_EmissionColor", fadedColor * 0.5f);
+            rockRenderer.SetPropertyBlock(propBlock);
+
+        }
     }
 }
