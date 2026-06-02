@@ -125,4 +125,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3ed2f4c18c5f0f43ba6ff69c433f16a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RelicPickup
-  interactRange: 1.8
+  interactRange: 1.4

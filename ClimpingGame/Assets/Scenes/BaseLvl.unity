@@ -215678,7 +215678,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7403497075196512921, guid: d68657b0b730b9244915e1f116ba54ec, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.1484215
+      value: 1.7
       objectReference: {fileID: 0}
     - target: {fileID: 7403497075196512921, guid: d68657b0b730b9244915e1f116ba54ec, type: 3}
       propertyPath: m_LocalPosition.y
@@ -215686,7 +215686,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7403497075196512921, guid: d68657b0b730b9244915e1f116ba54ec, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -2.8021462
+      value: -2.816
       objectReference: {fileID: 0}
     - target: {fileID: 7403497075196512921, guid: d68657b0b730b9244915e1f116ba54ec, type: 3}
       propertyPath: m_LocalRotation.w
@@ -220883,7 +220883,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInventory
   rocks: 5
-  relics: 2
+  relics: 0
 --- !u!114 &1999699021
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -220896,8 +220896,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3712457e77733cd45b04081f3b43ab35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FallDamage
-  safeFallHeight: 4
-  deadlyFallHeight: 20
+  safeFallHeight: 3
+  deadlyFallHeight: 19
   recoveryDelay: 5
   recoverySpeed: 0.05
 --- !u!4 &1999699027 stripped
@@ -224571,7 +224571,7 @@ Transform:
   m_GameObject: {fileID: 2124169030}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -35, y: 155, z: 30}
+  m_LocalPosition: {x: -35, y: 152.01, z: 30}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
