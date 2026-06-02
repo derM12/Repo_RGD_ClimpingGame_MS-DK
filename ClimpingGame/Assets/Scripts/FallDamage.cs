@@ -15,6 +15,7 @@ public class FallDamage : MonoBehaviour
     float previousTrauma = 0f;             // trauma carried over from previous falls
     float recoveryTimer = 0f;
     bool isRecovering = false;
+    bool justRespawned = false;            // blocks TrackFall right after respawn
 
     float highestY;
     bool wasFalling = false;
@@ -39,8 +40,14 @@ public class FallDamage : MonoBehaviour
             return;
         }
 
-        TrackFall();
+        if (!justRespawned)
+            TrackFall();
+
         HandleRecovery();
+
+        // Clear flag once fully recovered after respawn
+        if (justRespawned && trauma <= 0f)
+            justRespawned = false;
     }
 
     void TrackFall()
@@ -80,6 +87,8 @@ public class FallDamage : MonoBehaviour
                     Debug.Log("Falling | Trauma: " + (trauma * 100f).ToString("F0") + "% - HEAVY");
                 else
                     Debug.Log("Falling | Trauma: " + (trauma * 100f).ToString("F0") + "% - LIGHT");
+
+                VignetteController.Instance?.SetIntensity(trauma);
             }
         }
 
@@ -123,6 +132,8 @@ public class FallDamage : MonoBehaviour
             Debug.Log("Vignette: HEAVY");
         else
             Debug.Log("Vignette: LIGHT");
+
+        VignetteController.Instance?.SetIntensity(trauma);
     }
 
     void HandleRecovery()
@@ -141,12 +152,13 @@ public class FallDamage : MonoBehaviour
         else
         {
             trauma = Mathf.Max(0f, trauma - recoverySpeed * Time.deltaTime);
-            previousTrauma = trauma; // keep previousTrauma in sync while recovering
+            previousTrauma = trauma;
+            VignetteController.Instance?.SetIntensity(trauma); // drives the fade out
 
-            // Log recovery milestones
             if (trauma <= 0f)
             {
                 previousTrauma = 0f;
+                VignetteController.Instance?.SetIntensity(0f);
                 Debug.Log("Vignette: fully recovered");
             }
         }
@@ -160,11 +172,12 @@ public class FallDamage : MonoBehaviour
             return;
         }
 
-        trauma = 0f;
         previousTrauma = 0f;
-        isRecovering = false;
-        recoveryTimer = 0f;
         wasFalling = false;
+        justRespawned = true;  // block TrackFall until recovered
+        isRecovering = true;   // skip delay, recover immediately
+        recoveryTimer = 0f;
+        highestY = SpawnPoint.Instance.transform.position.y;
 
         cc.enabled = false;
         transform.position = SpawnPoint.Instance.transform.position;
@@ -172,6 +185,6 @@ public class FallDamage : MonoBehaviour
         Physics.SyncTransforms();
         cc.enabled = true;
 
-        Debug.Log("Respawned at spawn point");
+        Debug.Log("Respawned - recovering");
     }
 }
