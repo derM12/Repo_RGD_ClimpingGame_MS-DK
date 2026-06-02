@@ -42,6 +42,13 @@ public class FallDamage : MonoBehaviour
 
         if (!justRespawned)
             TrackFall();
+        else if (!cc.isGrounded && cc.velocity.y < -0.1f)
+        {
+            // Player started falling after respawn - resume tracking
+            justRespawned = false;
+            highestY = transform.position.y;
+            Debug.Log("Respawn immunity cancelled - falling detected");
+        }
 
         HandleRecovery();
 
