@@ -221,32 +221,35 @@ namespace StarterAssets
 
         public void EnterClimb(Transform rope, Transform topPoint, Transform bottomPoint, bool fromBottom = false)
         {
-            _enteredFromBottom = fromBottom;
             IsClimbing = true;
             _ropeTarget = rope;
             _verticalVelocity = 0f;
 
-
             _ropeMaxY = topPoint != null ? topPoint.position.y : rope.position.y;
             _ropeMinY = bottomPoint != null ? bottomPoint.position.y : rope.position.y - 10f;
 
+            // Snap to rope's clean forward or backward axis
             Vector3 directionFromRope = transform.position - rope.position;
             directionFromRope.y = 0f;
             directionFromRope.Normalize();
 
-            _ropeExitDirection = directionFromRope;
+            float dot = Vector3.Dot(rope.right, directionFromRope);
+            Vector3 snappedDir = dot >= 0 ? rope.right : -rope.right;
+
+            _ropeExitDirection = snappedDir;
+            _enteredFromBottom = fromBottom;
 
             if (fromBottom)
             {
                 // Stay in place, just smooth rotate to face the rope
-                StartCoroutine(SmoothRotate(Quaternion.LookRotation(-directionFromRope), 0.5f));
-                Debug.Log("Grabbed from bottom - no position flip");
+                StartCoroutine(SmoothRotate(Quaternion.LookRotation(-snappedDir), 0.5f));
+                Debug.Log("Grabbed from bottom");
             }
             else
             {
                 // Flip to opposite side at top
                 float grabDistance = 1f;
-                Vector3 opposite = rope.position + (-directionFromRope * grabDistance);
+                Vector3 opposite = rope.position + (-snappedDir * grabDistance);
                 opposite.y = _ropeMaxY;
 
                 _controller.enabled = false;
@@ -254,8 +257,8 @@ namespace StarterAssets
                 Physics.SyncTransforms();
                 _controller.enabled = true;
 
-                StartCoroutine(SmoothRotate(Quaternion.LookRotation(directionFromRope), 0.5f));
-                Debug.Log("Grabbed from top - flipped to other side");
+                StartCoroutine(SmoothRotate(Quaternion.LookRotation(snappedDir), 0.5f));
+                Debug.Log("Grabbed from top - snapped to clean axis");
             }
         }
 

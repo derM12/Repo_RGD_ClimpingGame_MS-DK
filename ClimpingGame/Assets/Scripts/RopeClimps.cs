@@ -40,24 +40,32 @@ public class RopeClimb : MonoBehaviour
             }
             else
             {
-                // Check top point
+                //check top Point
                 float distanceTop = topPoint != null ? Vector3.Distance(topPoint.position, player.transform.position) : float.MaxValue;
-                // Check bottom point
+                //check bottom Point
                 float distanceBottom = bottomPoint != null ? Vector3.Distance(bottomPoint.position, player.transform.position) : float.MaxValue;
 
-                if (distanceTop <= interactRange)
+
+                if (distanceTop <= interactRange || distanceBottom <= interactRange)
                 {
-                    Debug.Log("Grabbing from top");
-                    player.EnterClimb(transform, topPoint, bottomPoint, fromBottom: false);
-                }
-                else if (distanceBottom <= interactRange)
-                {
-                    Debug.Log("Grabbing from bottom");
-                    player.EnterClimb(transform, topPoint, bottomPoint, fromBottom: true);
-                }
-                else
-                {
-                    Debug.Log("Distance top: " + distanceTop + " | Distance bottom: " + distanceBottom);
+                    // Check approach angle
+                    Vector3 dirToPlayer = (player.transform.position - transform.position);
+                    dirToPlayer.y = 0f;
+                    dirToPlayer.Normalize();
+
+                    float angle = Vector3.Angle(transform.right, dirToPlayer);
+
+                    // Only allow from front (0-45°) or back (135-180°)
+                    if (angle <= 45f || angle >= 135f)
+                    {
+                        bool fromBottom = distanceBottom < distanceTop;
+                        player.EnterClimb(transform, topPoint, bottomPoint, fromBottom);
+                        Debug.Log("Entered climb at angle: " + angle);
+                    }
+                    else
+                    {
+                        Debug.Log("Bad angle: " + angle + " - approach from front or back of rope");
+                    }
                 }
             }
         }
