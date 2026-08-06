@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 6737109859212618873}
   - component: {fileID: 7426575205301788423}
   m_Layer: 0
-  m_Name: ScaffoldStart
+  m_Name: ScaffoldStartOld
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -67,7 +67,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 6926342348990948132, guid: 8266d33eced5491478f1d1697e68775a, type: 3}
+  - {fileID: 2100000, guid: de82ebf4bc10d2244be43da6ccc6c002, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
