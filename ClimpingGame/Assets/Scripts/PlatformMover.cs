@@ -8,24 +8,31 @@ public class PlatformMover : MonoBehaviour
 
     private Vector3 startPosition;
     private Vector3 targetPosition;
+    private Vector3 lastPosition;
+    private Vector3 velocity;
 
     private bool moving = false;
     private bool isUp = false;
+
+    public Vector3 DeltaMovement { get; private set; }
 
     private void Start()
     {
         startPosition = transform.position;
         targetPosition = startPosition;
+        lastPosition = transform.position;
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         if (moving)
         {
-            transform.position = Vector3.MoveTowards(
+            transform.position = Vector3.SmoothDamp(
                 transform.position,
                 targetPosition,
-                moveSpeed * Time.deltaTime);
+                ref velocity,
+                0.2f,
+                moveSpeed);
 
             if (Vector3.Distance(transform.position, targetPosition) < 0.01f)
             {
@@ -33,15 +40,15 @@ public class PlatformMover : MonoBehaviour
                 moving = false;
             }
         }
+
+        DeltaMovement = transform.position - lastPosition;
+        lastPosition = transform.position;
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("Player"))
-            return;
-
-        if (moving)
-            return;
+        if (!other.CompareTag("Player")) return;
+        if (moving) return;
 
         if (isUp)
         {

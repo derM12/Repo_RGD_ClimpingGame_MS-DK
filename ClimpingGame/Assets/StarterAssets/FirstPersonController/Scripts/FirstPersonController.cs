@@ -53,6 +53,7 @@ namespace StarterAssets
         private float _rotationVelocity;
         private float _verticalVelocity;
         private float _terminalVelocity = 53.0f;
+        private PlatformMover currentPlatform;
 
         // timeout deltatime
         private float _jumpTimeoutDelta;
@@ -175,8 +176,20 @@ namespace StarterAssets
             Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
             if (_input.move != Vector2.zero)
                 inputDirection = transform.right * _input.move.x + transform.forward * _input.move.y;
+       
+            // Move with platform first
+            if (currentPlatform != null)
+            {
+                _controller.Move(currentPlatform.DeltaMovement);
+                currentPlatform = null;
+            }
 
             _controller.Move(inputDirection.normalized * (_speed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+        }
+
+        private void OnControllerColliderHit(ControllerColliderHit hit)
+        {
+            currentPlatform = hit.collider.GetComponent<PlatformMover>();
         }
 
         private void Climb()
