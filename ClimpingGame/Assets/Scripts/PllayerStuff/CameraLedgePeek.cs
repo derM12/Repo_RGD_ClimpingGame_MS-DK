@@ -21,7 +21,7 @@ public class CameraLedgePeek : MonoBehaviour
 
     void Update()
     {
-        bool peeking = Keyboard.current.leftShiftKey.isPressed;
+        bool peeking = Keyboard.current.leftCtrlKey.isPressed;
 
         float targetTilt = peeking ? downwardTiltAdd : 0f;
         float targetForward = peeking ? forwardOffset : 0f;
