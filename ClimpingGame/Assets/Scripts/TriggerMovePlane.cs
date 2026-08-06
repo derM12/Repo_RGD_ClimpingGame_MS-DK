@@ -4,7 +4,7 @@ public class TriggerMovePlane : MonoBehaviour
 {
     public GameObject plane;
     public float moveY = 2f;
-    public float speed = 2f;
+    public float speed = 15f;
 
     bool triggered = false;
     Vector3 targetPos;

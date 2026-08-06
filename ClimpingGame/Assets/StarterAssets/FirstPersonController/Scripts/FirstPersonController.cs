@@ -43,6 +43,11 @@ namespace StarterAssets
         // cinemachine
         private float _cinemachineTargetPitch;
 
+        private Vector3 _cameraTargetOriginalPos;
+
+        [HideInInspector] public float peekTiltOffset = 0f;
+        [HideInInspector] public float peekForwardOffset = 0f;
+
         // player
         private float _speed;
         private float _rotationVelocity;
@@ -99,6 +104,8 @@ namespace StarterAssets
 #endif
             _jumpTimeoutDelta = JumpTimeout;
             _fallTimeoutDelta = FallTimeout;
+
+            _cameraTargetOriginalPos = CinemachineCameraTarget.transform.localPosition;
         }
 
         private void Update()
@@ -134,12 +141,14 @@ namespace StarterAssets
                 _rotationVelocity = _input.look.x * RotationSpeed * deltaTimeMultiplier;
 
                 _cinemachineTargetPitch = ClampAngle(_cinemachineTargetPitch, BottomClamp, TopClamp);
-                CinemachineCameraTarget.transform.localRotation = Quaternion.Euler(_cinemachineTargetPitch, 0.0f, 0.0f);
 
                 // only rotate player left/right when not climbing
                 if (!IsClimbing)
                     transform.Rotate(Vector3.up * _rotationVelocity);
             }
+            // Always update these regardless of mouse input
+            CinemachineCameraTarget.transform.localRotation = Quaternion.Euler(_cinemachineTargetPitch + peekTiltOffset, 0.0f, 0.0f);
+            CinemachineCameraTarget.transform.localPosition = _cameraTargetOriginalPos + new Vector3(0f, 0f, peekForwardOffset);
         }
 
         private void Move()
