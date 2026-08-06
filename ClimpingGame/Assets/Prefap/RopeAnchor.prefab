@@ -184,6 +184,10 @@ PrefabInstance:
       propertyPath: interactRange
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 2320998615255548333, guid: 21697d64199b600449529d0b351728c7, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 9efc3e85e1690934f96279269e686802, type: 2}
     - target: {fileID: 2600633329530891359, guid: 21697d64199b600449529d0b351728c7, type: 3}
       propertyPath: m_Height
       value: 3.91
