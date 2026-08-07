@@ -176,7 +176,7 @@ namespace StarterAssets
             Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
             if (_input.move != Vector2.zero)
                 inputDirection = transform.right * _input.move.x + transform.forward * _input.move.y;
-       
+
             // Move with platform first
             if (currentPlatform != null)
             {
@@ -185,6 +185,12 @@ namespace StarterAssets
             }
 
             _controller.Move(inputDirection.normalized * (_speed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+
+            bool isMoving = _input.move != Vector2.zero && Grounded;
+            bool isSprinting = isMoving && _input.sprint;
+
+            AudioManager.Instance?.SetRunning(isSprinting);
+            AudioManager.Instance?.SetFootsteps(isMoving && !isSprinting);
         }
 
         private void OnControllerColliderHit(ControllerColliderHit hit)
@@ -193,7 +199,8 @@ namespace StarterAssets
         }
 
         private void Climb()
-        {
+        {           
+            AudioManager.Instance?.SetRopeTension(true);
             // W/S moves up and down the rope
             float vertical = _input.move.y;
 
@@ -286,6 +293,8 @@ namespace StarterAssets
 
         public void ExitClimb()
         {
+            AudioManager.Instance?.SetRopeTension(false);
+
             bool atTop = Mathf.Abs(transform.position.y - _ropeMaxY) < 0.1f;
             bool shouldFlip = atTop || _enteredFromBottom;
 

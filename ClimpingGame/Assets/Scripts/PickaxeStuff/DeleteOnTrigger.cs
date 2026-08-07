@@ -6,6 +6,7 @@ public class DeleteOnTrigger : MonoBehaviour
     {
         if (other.CompareTag("Pickaxe"))
         {
+            AudioManager.Instance?.PlayRockSmash();
             Destroy(gameObject);
         }
     }

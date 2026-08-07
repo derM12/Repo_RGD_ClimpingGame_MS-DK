@@ -69,7 +69,10 @@ public class FallDamage : MonoBehaviour
 
         if (falling)
         {
+            if (!wasFalling) // first frame of falling
+                AudioManager.Instance?.PlayFallStart();
             wasFalling = true;
+
 
             float currentFallDistance = highestY - transform.position.y;
             if (currentFallDistance > safeFallHeight)
@@ -102,6 +105,8 @@ public class FallDamage : MonoBehaviour
         // Landed
         if (wasFalling && cc.isGrounded)
         {
+            AudioManager.Instance?.StopFall();
+
             float fallDistance = highestY - transform.position.y;
 
             if (fallDistance > safeFallHeight)

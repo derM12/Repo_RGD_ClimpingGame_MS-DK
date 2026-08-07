@@ -30,7 +30,9 @@ public class Shopkeeper : MonoBehaviour
             if (inventory.TradeRelicForRock())
             {
                 if (animator != null)
+                    AudioManager.Instance?.PlayTrading();
                     animator.SetTrigger("Sell");
+
             }
         }
     }

@@ -25,6 +25,7 @@ public class RelicPickup : MonoBehaviour
 
         if (distance <= interactRange && Keyboard.current.eKey.wasPressedThisFrame)
         {
+            AudioManager.Instance?.PlayRelicPickup();
             inventory.AddRelic();
             pickedUp = true;
             gameObject.SetActive(false); // hide the relic
