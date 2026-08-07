@@ -13,6 +13,6 @@ public class InventoryUI : MonoBehaviour
     private void Update()
     {
         rocksText.text = "Rocks: " + inventory.rocks;
-        relicsText.text = "Relics: " + inventory.relics;
+        relicsText.text = ": " + inventory.relics;
     }
 }
