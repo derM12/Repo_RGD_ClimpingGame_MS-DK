@@ -136,6 +136,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: e2d6d5367936e9140814e598871bf6e1, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 49de3e5c7b1648b45b5f58a164136c65, type: 2}
+    - target: {fileID: -5754084199372789682, guid: e2d6d5367936e9140814e598871bf6e1, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: -2893882437805235404, guid: 7e7e11342a6c7ed4da399bf9c1a39eea, type: 3}
     - target: {fileID: 919132149155446097, guid: e2d6d5367936e9140814e598871bf6e1, type: 3}
       propertyPath: m_Name
       value: Iron_Hook
