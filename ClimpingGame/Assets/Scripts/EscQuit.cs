@@ -84,7 +84,7 @@ public class EscQuitUI : MonoBehaviour
             messageText.gameObject.SetActive(false);
     }
 
-    private void QuitGame()
+    public void QuitGame()
     {
         Debug.Log("Quitting game (Esc held).");
 
