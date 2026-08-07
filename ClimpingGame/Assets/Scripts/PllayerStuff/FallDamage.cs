@@ -16,6 +16,7 @@ public class FallDamage : MonoBehaviour
     float recoveryTimer = 0f;
     bool isRecovering = false;
     bool justRespawned = false;            // blocks TrackFall right after respawn
+    bool fallSoundPlaying = false;         // so fall sound only triggers once per fall
 
     float highestY;
     bool wasFalling = false;
@@ -69,10 +70,7 @@ public class FallDamage : MonoBehaviour
 
         if (falling)
         {
-            if (!wasFalling) // first frame of falling
-                AudioManager.Instance?.PlayFallStart();
             wasFalling = true;
-
 
             float currentFallDistance = highestY - transform.position.y;
             if (currentFallDistance > safeFallHeight)
@@ -81,6 +79,13 @@ public class FallDamage : MonoBehaviour
                 trauma = Mathf.Clamp01(previousTrauma + t); // add to previous trauma
                 isRecovering = false;
                 recoveryTimer = 0f;
+
+                // Play fall sound only when trauma first kicks in
+                if (!fallSoundPlaying)
+                {
+                    AudioManager.Instance?.PlayFallStart();
+                    fallSoundPlaying = true;
+                }
 
                 if (trauma >= 1f)
                 {
@@ -106,6 +111,7 @@ public class FallDamage : MonoBehaviour
         if (wasFalling && cc.isGrounded)
         {
             AudioManager.Instance?.StopFall();
+            fallSoundPlaying = false; // reset so next fall can trigger it again
 
             float fallDistance = highestY - transform.position.y;
 
@@ -189,7 +195,10 @@ public class FallDamage : MonoBehaviour
         justRespawned = true;  // block TrackFall until recovered
         isRecovering = true;   // skip delay, recover immediately
         recoveryTimer = 0f;
+        fallSoundPlaying = false;
         highestY = SpawnPoint.Instance.transform.position.y;
+
+        AudioManager.Instance?.StopFall(); // make sure fall sound stops on respawn
 
         cc.enabled = false;
         transform.position = SpawnPoint.Instance.transform.position;
